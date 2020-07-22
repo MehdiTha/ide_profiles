@@ -4,6 +4,10 @@
               indent-tabs-mode nil
               compilation-scroll-output t)
 
+(setq backup-directory-alist
+      `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
 
 (require 'package)
 (add-to-list 'package-archives
