@@ -1,1 +1,3 @@
-# ide_profiles
+# profile versionning
+
+Emacs and other profile versionning
