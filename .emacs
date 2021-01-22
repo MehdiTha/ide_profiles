@@ -1,12 +1,4 @@
-;; Default
-(setq-default compilation-scroll-output t)
-
-;; Inhibit splah screen
-(setq-default inhibit-splash-screen t)
-
-;; Indentation parameters
-(setq-default indent-tabs-mode nil
-              tab-width 4)
+;; GENERAL SETTINGS
 
 ;; Windows resizing
 (global-set-key (kbd "S-C-<left>") 'shrink-window-horizontally)
@@ -22,56 +14,69 @@
       `((".*" ,temporary-file-directory t)))
 
 
-;; Package Melap
-(require 'package)
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Emacs4CL 0.1.0 <https://git.io/emacs4cl>;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Customize user interface.
+(menu-bar-mode 0)
+(when (display-graphic-p)
+  (tool-bar-mode 0)
+  (scroll-bar-mode 0))
+(setq inhibit-startup-screen t)
+(load-theme 'wombat)
+
+;; Highlight matching pairs of parentheses.
+(setq show-paren-delay 0)
+(show-paren-mode)
+
+;; Workaround for https://debbugs.gnu.org/34341 in GNU Emacs <= 26.3.
+(when (and (version< emacs-version "26.3") (>= libgnutls-version 30603))
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+
+;; Enable installation of packages from MELPA.
 (package-initialize)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;; (unless package-archive-contents
+;;   (package-refresh-contents))
+;; (package-refresh-contents)
 
-;; Paredit
-(autoload 'enable-paredit-mode "paredit"
-  "Turn on pseudo-structural editing of Lisp code."
-  t)
-(add-hook 'emacs-lisp-mode-hook       'enable-paredit-mode)
-(add-hook 'racket-mode-hook             'enable-paredit-mode)
+;; Write customizations to ~/.emacs.d/custom.el instead of this file.
+(setq custom-file (concat user-emacs-directory "custom.el"))
+
+;; Install packages.
+(dolist (package '(slime paredit rainbow-delimiters racket-mode))
+  (unless (package-installed-p package)
+    (package-install package)))
+
+;; Configure SBCL as the Lisp program for SLIME.
+(add-to-list 'exec-path "/usr/local/bin")
+(setq inferior-lisp-program "sbcl")
+
+;; Enable Paredit.
+(add-hook 'emacs-lisp-mode-hook 'enable-paredit-mode)
+(add-hook 'eval-expression-minibuffer-setup-hook 'enable-paredit-mode)
+(add-hook 'ielm-mode-hook 'enable-paredit-mode)
+(add-hook 'lisp-mode-hook 'enable-paredit-mode)
 (add-hook 'lisp-interaction-mode-hook 'enable-paredit-mode)
-(add-hook 'scheme-mode-hook           'enable-paredit-mode)
+(add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
+(defun override-slime-del-key ()
+  (define-key slime-repl-mode-map
+    (read-kbd-macro paredit-backward-delete-key) nil))
+(add-hook 'slime-repl-mode-hook 'override-slime-del-key)
 
-;; ido and smex
-(require 'smex)
-(require 'ido-completing-read+)
+;; Enable Rainbow Delimiters.
+(add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'ielm-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'lisp-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'lisp-interaction-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'slime-repl-mode-hook 'rainbow-delimiters-mode)
 
-(ido-mode 1)
-(ido-everywhere 1)
-(ido-ubiquitous-mode 1)
-
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector
-   [default default default italic underline success warning error])
- '(ansi-color-names-vector
-   ["#242424" "#e5786d" "#95e454" "#cae682" "#8ac6f2" "#333366" "#ccaa8f" "#f6f3e8"])
- '(custom-enabled-themes '(leuven))
- '(custom-safe-themes
-   '("5f824cddac6d892099a91c3f612fcf1b09bb6c322923d779216ab2094375c5ee" "1a212b23eb9a9bedde5ca8d8568b1e6351f6d6f989dd9e9de7fba8621e8ef82d" default))
- '(frame-brackground-mode 'dark)
- '(package-selected-packages '(paredit racket-mode gruber-darker-theme smex)))
-
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+; Paredit for racket
+(add-hook 'racket-mode-hook #'enable-paredit-mode)
 
 
-;; Racket-mode configuration
-(add-hook 'racket-mode-hook
-	      (lambda ()
-	        (define-key racket-mode-map (kbd "<f5>") 'racket-run)))
+;;racket
+;(load "~.emacs.d/racket.el")
